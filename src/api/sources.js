@@ -12,7 +12,7 @@ const workQueue = new Queue('worker', {
 
 router.post("/products", async (req, res, next) => {
     let products = req.body.products;
-    
+
     products.map(async (product, key) => {
         const data = { product };
         const options = {

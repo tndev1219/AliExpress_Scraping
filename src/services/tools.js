@@ -9,7 +9,7 @@ const {
 
 // Create router
 exports.createRouter = (globalContext) => {
-    return async function (routeName, requestContext) {
+    return async (routeName, requestContext) => {
         const route = routes[routeName];
         if (!route) throw new Error(`No route for name: ${routeName}`);
         log.debug(`Invoking route: ${routeName}`);
@@ -40,8 +40,9 @@ exports.getProxyAgent = async (userInput) => {
 // Detects url and map them to routes
 exports.mapStartUrls = (startUrls) => {
     return startUrls.map((startUrl) => {
-        const parsedURL = URL.parse(startUrl.url);
-        const link = `https://www.aliexpress.com${parsedURL.pathname}`;
+        // const parsedURL = URL.parse(startUrl.url);
+        // const link = `https://www.aliexpress.com${parsedURL.pathname}`;
+        const link = startUrl.url;
         let routeType = '';
         let userData = {};
 

@@ -12,7 +12,7 @@ function start() {
       port: process.env.REDIS_PORT
     }
   });
-  
+
   workQueue.process(maxJobsPerWorker, async (job) => {
     await worker.aliExpressWorker(job.data.product);
     return { value: "This will be stored" };

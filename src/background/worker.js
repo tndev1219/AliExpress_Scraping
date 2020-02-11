@@ -4,7 +4,7 @@ var AliRequest = require('../domain/alirequest');
 var AliQueue = require('../domain/aliqueue');
 var callApifyMain = require('../services/main');
 var moment = require('moment');
-const uuidv1 = require('uuid/v1');
+const uuidv4 = require('uuid/v4');
 
 const aliExpressWorker = (product) => {
     db.query(Source.getSourceByFieldNameSQL('store_language'), [product.language], (err, data) => {
@@ -12,15 +12,15 @@ const aliExpressWorker = (product) => {
             if (data && data.length > 0) {
                 let domain = data[0].store_url
                 let params = {
-                    uuid: uuidv1(),
-                    num_products: 0,
+                    uuid: uuidv4(),
+                    num_products: 1,
                     created_at: moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
                     updated_at: moment(Date.now()).format("YYYY-MM-DD hh:mm:ss")
                 }
                 let aliRequest = new AliRequest()
                 db.query(aliRequest.getAddAliRequestSQL(), params, (err, data) => {
                     let params = {
-                        uuid: uuidv1(),
+                        uuid: uuidv4(),
                         product_code: product.code.toString(),
                         language: product.language,
                         product_info_payload: null,
@@ -38,17 +38,18 @@ const aliExpressWorker = (product) => {
                             //         if (data && data.length > 0) {
                             //             data.map((d, key) => {
                             //                 if (d.product_code === product.code.toString()) {                                            
-                                                let params = [
-                                                    'RESERVED',
-                                                    moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
-                                                    moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
-                                                    product.code.toString()
-                                                ];
-                                                let fields = 'status = ?, reserved_at = ?, updated_at = ?';
-                                                let condition = 'product_code = ?';
-                                                db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, async (err, data) => {
-                                                    await callApifyMain(startUrl);
-                                                });
+                            let params = [
+                                'RESERVED',
+                                moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
+                                moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
+                                product.code.toString(),
+                                // product.language
+                            ];
+                            let fields = 'status = ?, reserved_at = ?, updated_at = ?';
+                            let condition = 'product_code = ?';
+                            db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, async (err, data) => {
+                                await callApifyMain(startUrl);
+                            });
                             //                 }
                             //             });
                             //         }

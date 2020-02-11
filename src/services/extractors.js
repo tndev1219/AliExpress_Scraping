@@ -19,7 +19,6 @@ const getProductDetail = ($, url) => {
         commonModule,
     } = data;
 
-
     return {
         id: actionModule.productId,
         link: url,

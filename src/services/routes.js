@@ -25,14 +25,14 @@ exports.PRODUCT = async ({ $, userInput, request }, { requestQueue }) => {
     } catch (error) {
         await new Promise((resolve, reject) => {
             let params = [
-                'FAILED', 
-                moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"), 
+                'FAILED',
+                moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
                 moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
                 productId.toString()
             ];
             let fields = 'status = ?, failed_at = ?, updated_at = ?';
             let condition = 'product_code = ?';
-            db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, (err, data)=>{
+            db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, (err, data) => {
                 resolve();
             });
         });
@@ -61,7 +61,7 @@ exports.PRODUCT = async ({ $, userInput, request }, { requestQueue }) => {
                 let store = new Store();
                 db.query(store.getAddStoreSQL(), params, (err, data) => {
                     let params = [
-                        'FINISHED', 
+                        'FINISHED',
                         moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
                         JSON.stringify(product),
                         moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
@@ -69,7 +69,7 @@ exports.PRODUCT = async ({ $, userInput, request }, { requestQueue }) => {
                     ];
                     let fields = 'status = ?, finished_at = ?, product_info_payload = ?, updated_at = ?';
                     let condition = 'product_code = ?';
-                    db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, (err, data)=>{
+                    db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, (err, data) => {
                         resolve();
                     });
                 });
