@@ -11,7 +11,22 @@ const workQueue = new Queue('worker', {
 });
 
 router.post("/products", async (req, res, next) => {
-    let products = req.body.products;
+    let products = [];
+    if (req.body.products) {
+        products = req.body.products;
+    } else if (req.body.items && req.body.languages) {
+        req.body.items.map((item1) => {
+            req.body.languages.map((item2) => {
+                var product = {};
+                product.code = item1;
+                product.language = item2;
+                products.push(product);
+            })
+        });
+
+    } else {
+        return res.json({ message: 'Invalid Payload' });
+    }
 
     products.map(async (product, key) => {
         const data = { product };
@@ -21,7 +36,6 @@ router.post("/products", async (req, res, next) => {
         }
         await workQueue.add(data, options);
     });
-
     res.json({ message: "ok" });
 })
 
