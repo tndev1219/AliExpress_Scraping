@@ -8,10 +8,11 @@ let maxJobsPerWorker = 50;
 function start() {
   let workQueue = new Queue('worker', {
     redis: {
-      host: 'aliexpress.3yq7qt.0001.use1.cache.amazonaws.com' ,
-      port: 6379
+      host: process.env.REDIS_HOST,
+      port: process.env.REDIS_PORT
     }
   });
+  
   workQueue.process(maxJobsPerWorker, async (job) => {
     await worker.aliExpressWorker(job.data.product);
     return { value: "This will be stored" };

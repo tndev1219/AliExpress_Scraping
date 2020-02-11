@@ -10,12 +10,14 @@ const {
 const callApifyMain = (url) => {
 
     Apify.main(async () => {
+
         log.info('PHASE -- STARTING ACTOR.');
 
         var userInput = await Apify.getInput();
         userInput = Object.assign({}, userInput, {"startUrls": [
             {"url": url}
         ]})
+
         log.info('ACTOR OPTIONS: -- ', userInput);
 
         // Create request queue
@@ -28,6 +30,7 @@ const callApifyMain = (url) => {
             throw new Error('Start URLs must be defined');
         } else {
             const mappedStartUrls = tools.mapStartUrls(startUrls);
+            
             // Initialize first requests
             for (const mappedStartUrl of mappedStartUrls) {
                 await requestQueue.addRequest({
@@ -35,9 +38,9 @@ const callApifyMain = (url) => {
                 });
             }
         }
-
+        
         const agent = await tools.getProxyAgent(userInput);
-
+        
         // Create route
         const router = tools.createRouter({ requestQueue });
 
