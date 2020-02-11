@@ -36,6 +36,7 @@ router.post("/products", async (req, res, next) => {
         }
         await workQueue.add(data, options);
     });
+    
     res.json({ message: "ok" });
 })
 
