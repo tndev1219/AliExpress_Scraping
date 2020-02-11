@@ -43,10 +43,10 @@ const aliExpressWorker = (product) => {
                                 moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
                                 moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
                                 product.code.toString(),
-                                // product.language
+                                product.language
                             ];
                             let fields = 'status = ?, reserved_at = ?, updated_at = ?';
-                            let condition = 'product_code = ?';
+                            let condition = 'product_code = ? AND language=? AND product_info_payload IS NULL';
                             db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, async (err, data) => {
                                 await callApifyMain(startUrl);
                             });

@@ -17,11 +17,13 @@ const getProductDetail = ($, url) => {
         crossLinkModule,
         recommendModule,
         commonModule,
+        webEnv
     } = data;
 
     return {
         id: actionModule.productId,
         link: url,
+        language: webEnv.language.toUpperCase(),
         title: titleModule.subject,
         tradeAmount: `${titleModule.tradeCount ? titleModule.tradeCount : ''} ${titleModule.tradeCountUnit ? titleModule.tradeCountUnit : ''}`,
         averageStar: titleModule.feedbackRating.averageStar,

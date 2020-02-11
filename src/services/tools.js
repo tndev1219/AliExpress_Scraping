@@ -56,6 +56,12 @@ exports.mapStartUrls = (startUrls) => {
             throw new Error('Wrong URL provided to Start URLS!');
         }
 
+        if (startUrl.url.split('https://')[1].split('.aliexpress')[0] === 'www') {
+            userData.language = 'EN';
+        } else {
+            userData.language = startUrl.url.split('https://')[1].split('.aliexpress')[0].toUpperCase();
+        }
+
         userData.label = routeType;
 
         return {

@@ -14,7 +14,8 @@ const {
 // Product page crawler
 // Fetches product detail from detail page
 exports.PRODUCT = async ({ $, userInput, request }, { requestQueue }) => {
-    const { productId } = request.userData;
+    const { productId, language } = request.userData;
+
     const { includeDescription } = userInput;
     let product = ''
     log.info(`CRAWLER -- Fetching product: ${productId}`);
@@ -28,10 +29,11 @@ exports.PRODUCT = async ({ $, userInput, request }, { requestQueue }) => {
                 'FAILED',
                 moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
                 moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
-                productId.toString()
+                productId.toString(),
+                language
             ];
             let fields = 'status = ?, failed_at = ?, updated_at = ?';
-            let condition = 'product_code = ?';
+            let condition = 'product_code = ? AND language=? AND product_info_payload IS NULL';
             db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, (err, data) => {
                 resolve();
             });
@@ -65,10 +67,11 @@ exports.PRODUCT = async ({ $, userInput, request }, { requestQueue }) => {
                         moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
                         JSON.stringify(product),
                         moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
-                        productId.toString()
+                        productId.toString(),
+                        product.language
                     ];
                     let fields = 'status = ?, finished_at = ?, product_info_payload = ?, updated_at = ?';
-                    let condition = 'product_code = ?';
+                    let condition = 'product_code = ? AND language=? AND product_info_payload IS NULL';
                     db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, (err, data) => {
                         resolve();
                     });
