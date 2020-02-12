@@ -45,10 +45,9 @@ router.post("/products", async (req, res, next) => {
                             product.language = item2;
                             products.push(product);
                         })
-                    });
-            
+                    });            
                 } else {
-                    return res.json({ message: 'Invalid Payload' });
+                    return res.json({ message: 'Invalid Payload!' });
                 }
             
                 products.map(async (product, key) => {

@@ -1,6 +1,7 @@
 const Apify = require('apify');
 const Promise = require('bluebird');
 const tools = require('./tools');
+require('dotenv').config();
 
 const {
     utils: { log },
@@ -47,7 +48,59 @@ const callApifyMain = (url) => {
         const router = tools.createRouter({ requestQueue });
 
         log.info('PHASE -- SETTING UP CRAWLER.', requestQueue);
-        const crawler = new Apify.CheerioCrawler({
+
+        const cheerioCrawler = new Apify.CheerioCrawler({
+            requestQueue,
+            handlePageTimeoutSecs: 99999,
+            maxRequestRetries: 10,
+            requestTimeoutSecs: 300,
+            maxConcurrency: userInput.maxConcurrency,
+            ignoreSslErrors: true,
+            // Proxy options
+            ...(userInput.proxy.useApifyProxy ? { useApifyProxy: userInput.proxy.useApifyProxy } : {}),
+            ...(userInput.proxy.apifyProxyGroups ? { apifyProxyGroups: userInput.proxy.apifyProxyGroups } : {}),
+            ...(userInput.proxy.proxyUrls ? { proxyUrls: userInput.proxy.proxyUrls } : {}),
+            prepareRequestFunction: ({ request }) => {
+                request.headers = {
+                    Connection: 'keep-alive',
+                    'User-Agent': Apify.utils.getRandomUserAgent(),
+                };
+
+                return request;
+            },
+            handlePageFunction: async (context) => {
+                const { request, response, $ } = context;
+
+                log.debug(`CRAWLER -- Processing ${request.url}`);
+
+                // Status code check
+                if (!response || response.statusCode !== 200
+                    || request.url.includes('login.')
+                    || $('body').data('spm') === 'buyerloginandregister') {
+                    throw new Error(`We got blocked by target on ${request.url}`);
+                }
+                
+                if (request.userData.label !== 'DESCRIPTION' && !$('script').text().includes('runParams')) {
+                    throw new Error(`We got blocked by target on ${request.url}`);
+                }
+
+                if ($('html').text().includes('/_____tmd_____/punish')) {
+                    throw new Error(`We got blocked by target on ${request.url}`);
+                }
+
+                // Random delay
+                await Promise.delay(Math.random() * 10000);
+
+                // Add user input to context
+                context.userInput = userInput;
+                context.agent = agent;
+
+                // Redirect to route
+                await router(request.userData.label, context);
+            },
+        });
+
+        const puppeteerCrawler = new Apify.PuppeteerCrawler({
             requestQueue,
             handlePageTimeoutSecs: 99999,
             maxRequestRetries: 10,
@@ -100,7 +153,7 @@ const callApifyMain = (url) => {
 
         log.info('PHASE -- STARTING CRAWLER.');
 
-        await crawler.run();
+        process.env.USE_CHEERIO === 'TRUE' ? await cheerioCrawler.run() : await puppeteerCrawler.run();
 
         log.info('PHASE -- ACTOR FINISHED.');
         await requestQueue.drop();
