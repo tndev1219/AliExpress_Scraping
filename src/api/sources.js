@@ -4,6 +4,7 @@ require('dotenv').config()
 const router = express.Router();
 var db = require('../db/database');
 var User = require('../domain/user');
+var AliQueue = require('../domain/aliqueue');
 
 const workQueue = new Queue('worker', {
     redis: {
@@ -24,7 +25,7 @@ const authCheck = (token, callback) => {
             }
         }
     })
-}
+};
 
 router.post("/products", async (req, res, next) => {
 
@@ -65,7 +66,54 @@ router.post("/products", async (req, res, next) => {
     } else {
         return res.json({ message: 'Authontication failed!' })
     }
-})
+});
+
+router.post("/history", async (req, res, next) => {
+    if (req.headers.authorization) {
+        authCheck(req.headers.authorization.split(' ')[1], (err, data) => {
+            if (err) {
+                return res.json({ message: err });
+            } else {
+                var sql = `SELECT status, reserved_at, finished_at, failed_at FROM ali_queue `;
+                var params = [];
+                var condition = 'ORDER BY updated_at ASC LIMIT ?';
+
+                if (req.body.status) {
+                    params.push(req.body.status);
+                    sql = sql + 'WHERE status = ? ';
+                }
+
+                if (req.body.last_ts) {
+                    params.push(req.body.last_ts);
+
+                    if (sql.includes('WHERE')) {
+                        sql = sql + 'AND updated_at > ? ';
+                    } else {
+                        sql = sql + 'WHERE updated_at > ? ';
+                    }
+                }
+
+                params.push(req.body.limit);
+                sql = sql + condition;
+
+                db.query(AliQueue.getAliQueueByFieldNameSQL(sql), params, (err, data) => {
+                    if (err) {
+                        return res.json({ message: err.message });
+                    } else {
+                        var results = [];
+                        results = data.map((data) => {
+                            return JSON.parse(JSON.stringify(data));
+                        });
+
+                        return res.json({ results: results });                
+                    }
+                })
+            }
+        })
+    } else {
+        return res.json({ message: 'Authontication failed!' })
+    }
+});
 
 workQueue.on('global:completed', (jobId, result) => {
     console.log(`Job completed with result ${jobId}, ${result}`);

@@ -41,7 +41,7 @@ const aliExpressWorker = (product) => {
                                 product.language
                             ];
                             let fields = 'status = ?, reserved_at = ?, updated_at = ?';
-                            let condition = 'product_code = ? AND language=? AND product_info_payload IS NULL';
+                            let condition = 'product_code = ? AND language = ? AND product_info_payload IS NULL';
                             db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, async (err, data) => {
                                 await callApifyMain(startUrl);
                             });

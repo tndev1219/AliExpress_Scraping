@@ -14,13 +14,12 @@ class AliQueue {
         return sql;
     }
 
-    static getAliQueueByFieldNameSQL(fieldName) {
-        let sql = `SELECT * FROM ali_queue WHERE ${fieldName}=?`
+    static getAliQueueByFieldNameSQL(sql) {
         return sql;
     }
 
     static updateAliQueueByFieldNameSQL(fields, condition){
-        let sql = `UPDATE ali_queue SET ${fields} WHERE ${condition}`
+        let sql = `UPDATE ali_queue SET ${fields} WHERE ${condition}`;
         return sql
     }
 
