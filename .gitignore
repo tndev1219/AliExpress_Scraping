@@ -1,6 +1,5 @@
 node_modules
 dump.rdb
-.env
 .python-version
 apify_storage/datasets/*
 yarn.lock
