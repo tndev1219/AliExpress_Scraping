@@ -93,7 +93,12 @@ router.post("/history", async (req, res, next) => {
                     }
                 }
 
-                params.push(req.body.limit);
+                if (req.body.limit) {
+                    params.push(req.body.limit);
+                } else {
+                    params.push(100);                    
+                }
+
                 sql = sql + condition;
 
                 db.query(AliQueue.getAliQueueByFieldNameSQL(sql), params, (err, data) => {
@@ -107,7 +112,7 @@ router.post("/history", async (req, res, next) => {
 
                         return res.json({ results: results });                
                     }
-                })
+                });
             }
         })
     } else {

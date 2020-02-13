@@ -36,8 +36,13 @@ const callApifyMain = (url) => {
 
             // Initialize first requests
             for (const mappedStartUrl of mappedStartUrls) {
+
                 await requestQueue.addRequest({
                     ...mappedStartUrl,
+                    headers: { 
+                        Connection: 'keep-alive',
+                        'User-Agent': Apify.utils.getRandomUserAgent()
+                    }
                 });
             }
         }
@@ -55,19 +60,12 @@ const callApifyMain = (url) => {
             maxRequestRetries: 10,
             requestTimeoutSecs: 300,
             maxConcurrency: userInput.maxConcurrency,
+            maxRequestsPerCrawl: 100,
             ignoreSslErrors: true,
             // Proxy options
             ...(userInput.proxy.useApifyProxy ? { useApifyProxy: userInput.proxy.useApifyProxy } : {}),
             ...(userInput.proxy.apifyProxyGroups ? { apifyProxyGroups: userInput.proxy.apifyProxyGroups } : {}),
             ...(userInput.proxy.proxyUrls ? { proxyUrls: userInput.proxy.proxyUrls } : {}),
-            prepareRequestFunction: ({ request }) => {
-                request.headers = {
-                    Connection: 'keep-alive',
-                    'User-Agent': Apify.utils.getRandomUserAgent(),
-                };
-
-                return request;
-            },
             handlePageFunction: async (context) => {
                 const { request, response, $ } = context;
 
@@ -88,6 +86,11 @@ const callApifyMain = (url) => {
                     throw new Error(`We got blocked by target on ${request.url}`);
                 }
 
+                // prepare dataScript to get product info
+                var dataScript = $($('script').filter((i, script) => $(script).html().includes('runParams')).get()[0]).html();
+                dataScript = dataScript.split('window.runParams = ')[1].split('var GaData')[0].replace(/;/g, '');
+                context.dataScript = dataScript;
+
                 // Random delay
                 await Promise.delay(Math.random() * 10000);
 
@@ -98,46 +101,53 @@ const callApifyMain = (url) => {
                 // Redirect to route
                 await router(request.userData.label, context);
             },
+            handleFailedRequestFunction: async (context) => {
+                const { request, error } = context;
+                log.info('PHASE -- CRAWLER GOT ERROR:', error.message);
+            }
         });
 
         const puppeteerCrawler = new Apify.PuppeteerCrawler({
             requestQueue,
             handlePageTimeoutSecs: 99999,
             maxRequestRetries: 10,
-            requestTimeoutSecs: 300,
-            maxConcurrency: userInput.maxConcurrency,
-            ignoreSslErrors: true,
-            // Proxy options
-            ...(userInput.proxy.useApifyProxy ? { useApifyProxy: userInput.proxy.useApifyProxy } : {}),
-            ...(userInput.proxy.apifyProxyGroups ? { apifyProxyGroups: userInput.proxy.apifyProxyGroups } : {}),
-            ...(userInput.proxy.proxyUrls ? { proxyUrls: userInput.proxy.proxyUrls } : {}),
-            prepareRequestFunction: ({ request }) => {
-                request.headers = {
-                    Connection: 'keep-alive',
-                    'User-Agent': Apify.utils.getRandomUserAgent(),
-                };
-
-                return request;
+            gotoTimeoutSecs: 50,
+            maxRequestsPerCrawl: 10,
+            maxConcurrency: 10,
+            launchPuppeteerOptions: {
+                proxyURL: agent.proxy.href,
+                useChrome: true,
+                ...(userInput.proxy.useApifyProxy ? { useApifyProxy: userInput.proxy.useApifyProxy } : {}),
+                ...(userInput.proxy.apifyProxyGroups ? { apifyProxyGroups: userInput.proxy.apifyProxyGroups } : {}),
+                stealth: true
+            },
+            puppeteerPoolOptions: {
+                maxOpenPagesPerInstance: 10
             },
             handlePageFunction: async (context) => {
-                const { request, response, $ } = context;
+                const { request, response, page, puppeteerPool, autoscaledPool, session } = context;
+                let content = await page.content();
 
                 log.debug(`CRAWLER -- Processing ${request.url}`);
 
                 // Status code check
-                if (!response || response.statusCode !== 200
+                if (!response || response._status !== 200
                     || request.url.includes('login.')
-                    || $('body').data('spm') === 'buyerloginandregister') {
+                    || content.includes('data-spm="buyerloginandregister"')) {
                     throw new Error(`We got blocked by target on ${request.url}`);
                 }
                 
-                if (request.userData.label !== 'DESCRIPTION' && !$('script').text().includes('runParams')) {
+                if (request.userData.label !== 'DESCRIPTION' && !content.includes('runParams')) {
                     throw new Error(`We got blocked by target on ${request.url}`);
                 }
 
-                if ($('html').text().includes('/_____tmd_____/punish')) {
+                if (content.includes('/_____tmd_____/punish')) {
                     throw new Error(`We got blocked by target on ${request.url}`);
                 }
+
+                // prepare dataScript to get product info
+                const dataScript = content.split('window.runParams = ')[1].split('var GaData')[0].replace(/;/g, '');
+                context.dataScript = dataScript;
 
                 // Random delay
                 await Promise.delay(Math.random() * 10000);
@@ -149,6 +159,10 @@ const callApifyMain = (url) => {
                 // Redirect to route
                 await router(request.userData.label, context);
             },
+            handleFailedRequestFunction: async (context) => {
+                const { request, error } = context;
+                log.info('PHASE -- CRAWLER GOT ERROR:', error.message);
+            }
         });
 
         log.info('PHASE -- STARTING CRAWLER.');

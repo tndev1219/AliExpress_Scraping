@@ -13,7 +13,7 @@ const {
 
 // Product page crawler
 // Fetches product detail from detail page
-exports.PRODUCT = async ({ $, userInput, request }, { requestQueue }) => {
+exports.PRODUCT = async ({ dataScript, userInput, request }, { requestQueue }) => {
     const { productId, language } = request.userData;
 
     const { includeDescription } = userInput;
@@ -22,7 +22,7 @@ exports.PRODUCT = async ({ $, userInput, request }, { requestQueue }) => {
 
     // Fetch product details
     try {
-        product = await extractors.getProductDetail($, request.url);
+        product = await extractors.getProductDetail(dataScript, request.url);
     } catch (error) {
         await new Promise((resolve, reject) => {
             let params = [

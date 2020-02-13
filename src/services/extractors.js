@@ -1,10 +1,8 @@
 const safeEval = require('safe-eval');
 
 // Fetch basic product detail from a global object `runParams`
-const getProductDetail = ($, url) => {
-    const dataScript = $($('script').filter((i, script) => $(script).html().includes('runParams')).get()[0]).html();
-
-    const { data } = safeEval(dataScript.split('window.runParams = ')[1].split('var GaData')[0].replace(/;/g, ''));
+const getProductDetail = (dataScript, url) => {
+    const { data } = safeEval(dataScript);
 
     const {
         actionModule,
