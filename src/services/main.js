@@ -66,6 +66,7 @@ const callApifyMain = (url) => {
             ...(userInput.proxy.useApifyProxy ? { useApifyProxy: userInput.proxy.useApifyProxy } : {}),
             ...(userInput.proxy.apifyProxyGroups ? { apifyProxyGroups: userInput.proxy.apifyProxyGroups } : {}),
             ...(userInput.proxy.proxyUrls ? { proxyUrls: userInput.proxy.proxyUrls } : {}),
+            ...(process.env.PROXY_URL ? { proxyUrls: process.env.PROXY_URL } : {}),         
             handlePageFunction: async (context) => {
                 const { request, response, $ } = context;
 
