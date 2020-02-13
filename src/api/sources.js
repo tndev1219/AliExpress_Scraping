@@ -6,6 +6,9 @@ var db = require('../db/database');
 var User = require('../domain/user');
 var AliQueue = require('../domain/aliqueue');
 
+const validLanguageList = ['EN', 'IT', 'ES', 'FR', 'DE', 'NL', 'PT', 'PL', 'TR', 'RU', 'TH'];
+var invalidLanguageList = [];
+
 const workQueue = new Queue('worker', {
     redis: {
         host: process.env.REDIS_HOST,
@@ -57,10 +60,21 @@ router.post("/products", async (req, res, next) => {
                         delay: 20,
                         attempts: 3
                     }
-                    await workQueue.add(data, options);
+
+                    if (validLanguageList.includes(product.language)) {
+                        await workQueue.add(data, options);
+                    } else {
+                        invalidLanguageList.push(product.language);
+                    }                    
                 });
-            
-                return res.json({ message: "ok" });                
+                const tempList = invalidLanguageList;
+                invalidLanguageList = [];
+                
+                if (tempList.length === 0) {
+                    return res.json({ message: "ok" });                
+                } else {
+                    return res.json({ message: `Your requeset has some issues. ${tempList} is not registered. So you can't get any result about these languages.` });                
+                }
             }
         })
     } else {

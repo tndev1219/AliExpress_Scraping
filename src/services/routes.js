@@ -20,10 +20,10 @@ exports.PRODUCT = async ({ dataScript, userInput, request }, { requestQueue }) =
     let product = ''
     log.info(`CRAWLER -- Fetching product: ${productId}`);
 
-    // Fetch product details
-    try {
-        product = await extractors.getProductDetail(dataScript, request.url);
-    } catch (error) {
+    // Fetch product details    
+    product = await extractors.getProductDetail(dataScript, request.url);
+    
+    if (!product) {
         await new Promise((resolve, reject) => {
             let params = [
                 'FAILED',
@@ -38,7 +38,7 @@ exports.PRODUCT = async ({ dataScript, userInput, request }, { requestQueue }) =
                 resolve();
             });
         });
-    } finally {
+    } else {
         // Check description option
         if (includeDescription) {
             // Fetch description

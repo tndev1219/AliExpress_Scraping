@@ -66,7 +66,7 @@ const callApifyMain = (url) => {
             ...(userInput.proxy.useApifyProxy ? { useApifyProxy: userInput.proxy.useApifyProxy } : {}),
             ...(userInput.proxy.apifyProxyGroups ? { apifyProxyGroups: userInput.proxy.apifyProxyGroups } : {}),
             ...(userInput.proxy.proxyUrls ? { proxyUrls: userInput.proxy.proxyUrls } : {}),
-            ...(process.env.PROXY_URL ? { proxyUrls: process.env.PROXY_URL } : {}),         
+            ...(process.env.PROXY_URL ? { proxyUrls: [process.env.PROXY_URL] } : {}),         
             handlePageFunction: async (context) => {
                 const { request, response, $ } = context;
 
@@ -104,7 +104,16 @@ const callApifyMain = (url) => {
             },
             handleFailedRequestFunction: async (context) => {
                 const { request, error } = context;
+
+                // Add user input to context
+                context.userInput = userInput;
+                context.agent = agent;
+
+                context.dataScript = null;
+
                 log.info('PHASE -- CRAWLER GOT ERROR:', error.message);
+
+                await router(request.userData.label, context);
             }
         });
 
@@ -119,10 +128,10 @@ const callApifyMain = (url) => {
                 useChrome: true,
                 ...(userInput.proxy.useApifyProxy ? { useApifyProxy: userInput.proxy.useApifyProxy } : {}),
                 ...(userInput.proxy.apifyProxyGroups ? { apifyProxyGroups: userInput.proxy.apifyProxyGroups } : {}),
-                stealth: true
+                stealth: true,
             },
             puppeteerPoolOptions: {
-                ...(process.env.PROXY_URL ? { proxyUrls: process.env.PROXY_URL } : {}),                
+                ...(process.env.PROXY_URL ? { proxyUrls: [process.env.PROXY_URL] } : {}),                
                 maxOpenPagesPerInstance: 10
             },
             handlePageFunction: async (context) => {
@@ -162,7 +171,16 @@ const callApifyMain = (url) => {
             },
             handleFailedRequestFunction: async (context) => {
                 const { request, error } = context;
+
+                // Add user input to context
+                context.userInput = userInput;
+                context.agent = agent;
+
+                context.dataScript = null;
+
                 log.info('PHASE -- CRAWLER GOT ERROR:', error.message);
+
+                await router(request.userData.label, context);
             }
         });
 

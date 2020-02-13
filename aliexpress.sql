@@ -106,10 +106,10 @@ VALUES
 	(5,'Aliexpress Germany','DE','DE','https://de.aliexpress.com/'),
 	(6,'Aliexpress Netherland','NL','NL','https://nl.aliexpress.com/'),
 	(7,'Aliexpress Portugal','PT','PT','https://pt.aliexpress.com/'),
-	(8,'Aliexpress Poland','PL','PL','https://pl.aliexpress.com'),
-	(9,'Aliexpress Turkey','TR','TR','https://tr.aliexpress.com'),
-	(10,'Aliexpress Russia','RU','RU','https://ru.aliexpress.com'),
-	(11,'Aliexpress Thailand','TH','TH','https://th.aliexpress.com');
+	(8,'Aliexpress Poland','PL','PL','https://pl.aliexpress.com/'),
+	(9,'Aliexpress Turkey','TR','TR','https://tr.aliexpress.com/'),
+	(10,'Aliexpress Russia','RU','RU','https://ru.aliexpress.com/'),
+	(11,'Aliexpress Thailand','TH','TH','https://th.aliexpress.com/');
 
 /*!40000 ALTER TABLE `sources` ENABLE KEYS */;
 UNLOCK TABLES;

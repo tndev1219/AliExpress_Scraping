@@ -2,6 +2,11 @@ const safeEval = require('safe-eval');
 
 // Fetch basic product detail from a global object `runParams`
 const getProductDetail = (dataScript, url) => {
+
+    if (!dataScript) {
+        return false;
+    }
+
     const { data } = safeEval(dataScript);
 
     const {
