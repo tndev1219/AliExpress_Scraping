@@ -4,6 +4,6 @@
     "includeDescription": false,
     "maxConcurrency": 1000,
     "proxy":{
-        "useApifyProxy": true
+        "useApifyProxy": false
     }
 }

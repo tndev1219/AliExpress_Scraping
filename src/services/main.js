@@ -114,14 +114,14 @@ const callApifyMain = (url) => {
             gotoTimeoutSecs: 50,
             maxRequestsPerCrawl: 10,
             maxConcurrency: 10,
-            launchPuppeteerOptions: {
-                proxyURL: agent.proxy.href,
+            launchPuppeteerOptions: {                
                 useChrome: true,
                 ...(userInput.proxy.useApifyProxy ? { useApifyProxy: userInput.proxy.useApifyProxy } : {}),
                 ...(userInput.proxy.apifyProxyGroups ? { apifyProxyGroups: userInput.proxy.apifyProxyGroups } : {}),
                 stealth: true
             },
             puppeteerPoolOptions: {
+                ...(process.env.PROXY_URL ? { proxyUrls: process.env.PROXY_URL } : {}),                
                 maxOpenPagesPerInstance: 10
             },
             handlePageFunction: async (context) => {
