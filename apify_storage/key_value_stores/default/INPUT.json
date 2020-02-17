@@ -2,7 +2,7 @@
     "startPage": 1,
     "endPage": 10,
     "includeDescription": false,
-    "maxConcurrency": 1000,
+    "maxConcurrency": 10,
     "proxy":{
         "useApifyProxy": false
     }

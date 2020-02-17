@@ -60,7 +60,7 @@ const callApifyMain = (url) => {
             maxRequestRetries: 10,
             requestTimeoutSecs: 300,
             maxConcurrency: userInput.maxConcurrency,
-            maxRequestsPerCrawl: 100,
+            maxRequestsPerCrawl: 500,
             ignoreSslErrors: true,
             // Proxy options
             ...(userInput.proxy.useApifyProxy ? { useApifyProxy: userInput.proxy.useApifyProxy } : {}),
@@ -122,7 +122,7 @@ const callApifyMain = (url) => {
             handlePageTimeoutSecs: 99999,
             maxRequestRetries: 10,
             gotoTimeoutSecs: 50,
-            maxRequestsPerCrawl: 10,
+            maxRequestsPerCrawl: 500,
             maxConcurrency: 10,
             launchPuppeteerOptions: {                
                 useChrome: true,
