@@ -59,14 +59,14 @@ const callApifyMain = (urls) => {
             requestQueue,
             handlePageTimeoutSecs: 9999,
             maxRequestRetries: 5,
-            requestTimeoutSecs: 30,
+            requestTimeoutSecs: 20,
             maxConcurrency: userInput.maxConcurrency,
             maxRequestsPerCrawl: 500,
             ignoreSslErrors: true,
             // Proxy options
             ...(userInput.proxy.useApifyProxy ? { useApifyProxy: userInput.proxy.useApifyProxy } : {}),
             ...(userInput.proxy.apifyProxyGroups ? { apifyProxyGroups: userInput.proxy.apifyProxyGroups } : {}),
-            // ...(userInput.proxy.proxyUrls ? { proxyUrls: userInput.proxy.proxyUrls } : {}),
+            ...(userInput.proxy.proxyUrls ? { proxyUrls: userInput.proxy.proxyUrls } : {}),
             handlePageFunction: async (context) => {
                 console.log('----------------------------------------------------------------------------')
                 const { request, response, $ } = context;
@@ -120,7 +120,7 @@ const callApifyMain = (urls) => {
             requestQueue,
             handlePageTimeoutSecs: 99999,
             maxRequestRetries: 5,
-            gotoTimeoutSecs: 50,
+            gotoTimeoutSecs: 20,
             maxRequestsPerCrawl: 500,
             maxConcurrency: userInput.maxConcurrency,
             launchPuppeteerOptions: {                
@@ -130,7 +130,7 @@ const callApifyMain = (urls) => {
                 stealth: true,
             },
             puppeteerPoolOptions: {
-                // ...(userInput.proxy.proxyUrls ? { proxyUrls: userInput.proxy.proxyUrls } : {}),
+                ...(userInput.proxy.proxyUrls ? { proxyUrls: userInput.proxy.proxyUrls } : {}),
                 maxOpenPagesPerInstance: 5
             },
             handlePageFunction: async (context) => {

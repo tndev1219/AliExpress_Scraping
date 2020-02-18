@@ -6,7 +6,7 @@ var db = require('../db/database');
 var User = require('../domain/user');
 var AliQueue = require('../domain/aliqueue');
 
-const validLanguageList = ['EN', 'IT', 'ES', 'FR', 'DE', 'NL', 'PT', 'PL', 'TR', 'RU', 'TH'];
+const validLanguageList = ['EN', 'IT', 'ES', 'FR', 'DE', 'NL', 'PT', 'PL', 'TR', 'RU', 'TH', 'HE', 'VI', 'AR', 'KO', 'JA'];
 var invalidLanguageList = [];
 
 const workQueue = new Queue('worker', {
