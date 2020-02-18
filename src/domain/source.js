@@ -24,6 +24,11 @@ class Source {
         return sql;
     }
 
+    static getLanguageSourceSQL() {
+        let sql = `SELECT store_language FROM sources`;
+        return sql;
+    }
+
     static getSourceByFieldNameSQL(fieldName) {
         let sql = `SELECT * FROM sources WHERE ${fieldName}=?`
         return sql;

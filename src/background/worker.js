@@ -46,7 +46,7 @@ const aliExpressWorker = (product, payloadLen) => {
                             let condition = 'product_code = ? AND language = ? AND product_info_payload IS NULL';
                             db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, async (err, data) => {
                                 if (!err) {
-                                    startUrlList.push(startUrl);
+                                    startUrlList.push({'startUrl': startUrl, 'language': product.language});
 
                                     if (startUrlList.length === payloadLen) {
                                         await callApifyMain(startUrlList);

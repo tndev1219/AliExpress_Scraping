@@ -11,7 +11,7 @@ const {
 exports.createRouter = (globalContext) => {
     return async (routeName, requestContext) => {
         const route = routes[routeName];
-        
+
         if (!route) throw new Error(`No route for name: ${routeName}`);
 
         log.debug(`Invoking route: ${routeName}`);
@@ -62,7 +62,7 @@ exports.mapStartUrls = (startUrls) => {
         if (startUrl.url.split('https://')[1].split('.aliexpress')[0] === 'www') {
             userData.language = 'EN';
         } else {
-            userData.language = startUrl.url.split('https://')[1].split('.aliexpress')[0].toUpperCase();
+            userData.language = startUrl.language
         }
 
         userData.label = routeType;

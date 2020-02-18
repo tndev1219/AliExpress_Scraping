@@ -4,9 +4,10 @@ require('dotenv').config()
 const router = express.Router();
 var db = require('../db/database');
 var User = require('../domain/user');
+var Source = require('../domain/source');
 var AliQueue = require('../domain/aliqueue');
 
-const validLanguageList = ['EN', 'IT', 'ES', 'FR', 'DE', 'NL', 'PT', 'PL', 'TR', 'RU', 'TH', 'HE', 'VI', 'AR', 'KO', 'JA'];
+var validLanguageList = [];
 var invalidLanguageList = [];
 
 const workQueue = new Queue('worker', {
@@ -37,50 +38,58 @@ router.post("/products", async (req, res, next) => {
             if (err) {
                 return res.json({ message: err });
             } else {
-                let products = [];
+                db.query(Source.getLanguageSourceSQL(), (err, data) => {
+                    if (err) {
+                        return res.json({ message: err });
+                    } else {
+                        validLanguageList = JSON.parse(JSON.stringify(data)).map((lg) => (lg.store_language));
 
-                if (req.body.products) {
-                    products = req.body.products;
-                } else if (req.body.items && req.body.languages) {
-                    req.body.items.map((item1) => {
-                        req.body.languages.map((item2) => {
-                            var product = {};
-
-                            if (validLanguageList.includes(item2)) {
-                                product.code = item1;
-                                product.language = item2;
-                                products.push(product);
-                            } else {
-                                invalidLanguageList.push(item2);
-                            }                            
-                        })
-                    });            
-                } else {
-                    return res.json({ message: 'Invalid Payload!' });
-                }
-            
-                products.map(async (product, key) => {
+                        let products = [];
+        
+                        if (req.body.products) {
+                            products = req.body.products;
+                        } else if (req.body.items && req.body.languages) {
+                            req.body.items.map((item1) => {
+                                req.body.languages.map((item2) => {
+                                    var product = {};
+        
+                                    if (validLanguageList.includes(item2)) {
+                                        product.code = item1;
+                                        product.language = item2;
+                                        products.push(product);
+                                    } else {
+                                        invalidLanguageList.push(item2);
+                                    }                            
+                                })
+                            });            
+                        } else {
+                            return res.json({ message: 'Invalid Payload!' });
+                        }
                     
-                    const data = { product };
-                    const options = {
-                        payloadLen: products.length,
-                        delay: 20,
-                        attempts: 3
+                        products.map(async (product, key) => {
+                            
+                            const data = { product };
+                            const options = {
+                                payloadLen: products.length,
+                                delay: 20,
+                                attempts: 3
+                            }
+                            
+                            await workQueue.add(data, options);
+                        });
+        
+        
+                        const tempList = invalidLanguageList;
+                        invalidLanguageList = [];
+        
+                        
+                        if (tempList.length === 0) {
+                            return res.json({ message: "ok" });                
+                        } else {
+                            return res.json({ message: `Your requeset has some issues. ${tempList} is not registered. So you can't get any result about these languages.` });                
+                        }
                     }
-                    
-                    await workQueue.add(data, options);
-                });
-
-
-                const tempList = invalidLanguageList;
-                invalidLanguageList = [];
-
-                
-                if (tempList.length === 0) {
-                    return res.json({ message: "ok" });                
-                } else {
-                    return res.json({ message: `Your requeset has some issues. ${tempList} is not registered. So you can't get any result about these languages.` });                
-                }
+                })
             }
         })
     } else {

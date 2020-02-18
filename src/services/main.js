@@ -13,7 +13,7 @@ const callApifyMain = (urls) => {
     Apify.main(async () => {
 
         const sourceUrls = urls.map((url) => (
-            {"url": url}
+            {"url": url.startUrl, "language": url.language}
         ));
         
         log.info('PHASE -- STARTING ACTOR.');
