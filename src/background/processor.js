@@ -14,7 +14,7 @@ function start() {
   });
 
   workQueue.process(maxJobsPerWorker, async (job) => {
-    await worker.aliExpressWorker(job.data.product);
+    await worker.aliExpressWorker(job.data.product, job.opts.payloadLen);
     return { value: "This will be stored" };
   });
 }

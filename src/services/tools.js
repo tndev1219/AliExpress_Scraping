@@ -11,8 +11,11 @@ const {
 exports.createRouter = (globalContext) => {
     return async (routeName, requestContext) => {
         const route = routes[routeName];
+        
         if (!route) throw new Error(`No route for name: ${routeName}`);
+
         log.debug(`Invoking route: ${routeName}`);
+
         return route(requestContext, globalContext);
     };
 };

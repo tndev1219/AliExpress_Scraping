@@ -8,35 +8,36 @@ const {
 } = Apify;
 
 // Create crawler
-const callApifyMain = (url) => {
-
+const callApifyMain = (urls) => {
+    
     Apify.main(async () => {
 
+        const sourceUrls = urls.map((url) => (
+            {"url": url}
+        ));
+        
         log.info('PHASE -- STARTING ACTOR.');
-
+        
         var userInput = await Apify.getInput();
         userInput = Object.assign({}, userInput, {
-            "startUrls": [
-                { "url": url }
-            ]
+            "startUrls": sourceUrls
         })
-
+        
         log.info('ACTOR OPTIONS: -- ', userInput);
-
+        
         // Create request queue
         const requestQueue = await Apify.openRequestQueue();
-
+        
         // Fetch start urls
         const { startUrls } = userInput;
-
+        
         if (startUrls.length === 0) {
             throw new Error('Start URLs must be defined');
         } else {
             const mappedStartUrls = tools.mapStartUrls(startUrls);
-
+            
             // Initialize first requests
             for (const mappedStartUrl of mappedStartUrls) {
-
                 await requestQueue.addRequest({
                     ...mappedStartUrl,
                     headers: { 
@@ -46,7 +47,7 @@ const callApifyMain = (url) => {
                 });
             }
         }
-
+        
         const agent = await tools.getProxyAgent(userInput);
 
         // Create route
@@ -56,18 +57,18 @@ const callApifyMain = (url) => {
 
         const cheerioCrawler = new Apify.CheerioCrawler({
             requestQueue,
-            handlePageTimeoutSecs: 99999,
-            maxRequestRetries: 10,
-            requestTimeoutSecs: 300,
+            handlePageTimeoutSecs: 9999,
+            maxRequestRetries: 5,
+            requestTimeoutSecs: 30,
             maxConcurrency: userInput.maxConcurrency,
             maxRequestsPerCrawl: 500,
             ignoreSslErrors: true,
             // Proxy options
             ...(userInput.proxy.useApifyProxy ? { useApifyProxy: userInput.proxy.useApifyProxy } : {}),
             ...(userInput.proxy.apifyProxyGroups ? { apifyProxyGroups: userInput.proxy.apifyProxyGroups } : {}),
-            ...(userInput.proxy.proxyUrls ? { proxyUrls: userInput.proxy.proxyUrls } : {}),
-            ...(process.env.PROXY_URL ? { proxyUrls: [process.env.PROXY_URL] } : {}),         
+            // ...(userInput.proxy.proxyUrls ? { proxyUrls: userInput.proxy.proxyUrls } : {}),
             handlePageFunction: async (context) => {
+                console.log('----------------------------------------------------------------------------')
                 const { request, response, $ } = context;
 
                 log.debug(`CRAWLER -- Processing ${request.url}`);
@@ -78,7 +79,7 @@ const callApifyMain = (url) => {
                     || $('body').data('spm') === 'buyerloginandregister') {
                     throw new Error(`We got blocked by target on ${request.url}`);
                 }
-                
+
                 if (request.userData.label !== 'DESCRIPTION' && !$('script').text().includes('runParams')) {
                     throw new Error(`We got blocked by target on ${request.url}`);
                 }
@@ -88,9 +89,7 @@ const callApifyMain = (url) => {
                 }
 
                 // prepare dataScript to get product info
-                var dataScript = $($('script').filter((i, script) => $(script).html().includes('runParams')).get()[0]).html();
-                dataScript = dataScript.split('window.runParams = ')[1].split('var GaData')[0].replace(/;/g, '');
-                context.dataScript = dataScript;
+                context.dataScript = $($('script').filter((i, script) => $(script).html().includes('runParams')).get()[0]).html().split('window.runParams = ')[1].split('var GaData')[0].replace(/;/g, '');
 
                 // Random delay
                 await Promise.delay(Math.random() * 10000);
@@ -111,7 +110,7 @@ const callApifyMain = (url) => {
 
                 context.dataScript = null;
 
-                log.info('PHASE -- CRAWLER GOT ERROR:', error.message);
+                // log.info('PHASE -- CRAWLER GOT ERROR:', error.message);
 
                 await router(request.userData.label, context);
             }
@@ -120,10 +119,10 @@ const callApifyMain = (url) => {
         const puppeteerCrawler = new Apify.PuppeteerCrawler({
             requestQueue,
             handlePageTimeoutSecs: 99999,
-            maxRequestRetries: 10,
+            maxRequestRetries: 5,
             gotoTimeoutSecs: 50,
             maxRequestsPerCrawl: 500,
-            maxConcurrency: 10,
+            maxConcurrency: userInput.maxConcurrency,
             launchPuppeteerOptions: {                
                 useChrome: true,
                 ...(userInput.proxy.useApifyProxy ? { useApifyProxy: userInput.proxy.useApifyProxy } : {}),
@@ -131,8 +130,8 @@ const callApifyMain = (url) => {
                 stealth: true,
             },
             puppeteerPoolOptions: {
-                ...(process.env.PROXY_URL ? { proxyUrls: [process.env.PROXY_URL] } : {}),                
-                maxOpenPagesPerInstance: 10
+                // ...(userInput.proxy.proxyUrls ? { proxyUrls: userInput.proxy.proxyUrls } : {}),
+                maxOpenPagesPerInstance: 5
             },
             handlePageFunction: async (context) => {
                 const { request, response, page, puppeteerPool, autoscaledPool, session } = context;
@@ -178,7 +177,7 @@ const callApifyMain = (url) => {
 
                 context.dataScript = null;
 
-                log.info('PHASE -- CRAWLER GOT ERROR:', error.message);
+                // log.info('PHASE -- CRAWLER GOT ERROR:', error.message);
 
                 await router(request.userData.label, context);
             }
@@ -189,7 +188,7 @@ const callApifyMain = (url) => {
         process.env.USE_CHEERIO === 'TRUE' ? await cheerioCrawler.run() : await puppeteerCrawler.run();
 
         log.info('PHASE -- ACTOR FINISHED.');
-        await requestQueue.drop();
+        await requestQueue.drop(); 
     });
 }
 

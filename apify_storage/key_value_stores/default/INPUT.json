@@ -2,8 +2,11 @@
     "startPage": 1,
     "endPage": 10,
     "includeDescription": false,
-    "maxConcurrency": 10,
+    "maxConcurrency": 5,
     "proxy":{
-        "useApifyProxy": false
+        "useApifyProxy": false,
+        "proxyUrls": [
+            "http://localhost:24000"
+        ]
     }
 }

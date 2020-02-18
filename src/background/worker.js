@@ -6,7 +6,9 @@ var callApifyMain = require('../services/main');
 var moment = require('moment');
 const uuidv4 = require('uuid/v4');
 
-const aliExpressWorker = (product) => {
+var startUrlList = [];
+
+const aliExpressWorker = (product, payloadLen) => {
     db.query(Source.getSourceByFieldNameSQL('store_language'), [product.language], (err, data) => {
         if (!err) {
             if (data && data.length > 0) {
@@ -43,7 +45,13 @@ const aliExpressWorker = (product) => {
                             let fields = 'status = ?, reserved_at = ?, updated_at = ?';
                             let condition = 'product_code = ? AND language = ? AND product_info_payload IS NULL';
                             db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, async (err, data) => {
-                                await callApifyMain(startUrl);
+                                if (!err) {
+                                    startUrlList.push(startUrl);
+
+                                    if (startUrlList.length === payloadLen) {
+                                        await callApifyMain(startUrlList);
+                                    }                                    
+                                }
                             });
                         }
                     });

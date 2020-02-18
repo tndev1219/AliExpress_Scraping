@@ -26,13 +26,14 @@ exports.PRODUCT = async ({ dataScript, userInput, request }, { requestQueue }) =
     if (!product) {
         await new Promise((resolve, reject) => {
             let params = [
+                'arjtT1zdp7dc54eC39HqLyjWD',
                 'FAILED',
                 moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
                 moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
                 productId.toString(),
                 language
             ];
-            let fields = 'status = ?, failed_at = ?, updated_at = ?';
+            let fields = 'user_token=?, status = ?, failed_at = ?, updated_at = ?';
             let condition = 'product_code = ? AND language=? AND product_info_payload IS NULL';
             db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, (err, data) => {
                 resolve();
@@ -82,6 +83,8 @@ exports.PRODUCT = async ({ dataScript, userInput, request }, { requestQueue }) =
                 })
 
                 let params = [
+                    'arjtT1zdp7dc54eC39HqLyjWD',
+                    product.link,
                     'FINISHED',
                     moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
                     JSON.stringify(product),
@@ -89,13 +92,13 @@ exports.PRODUCT = async ({ dataScript, userInput, request }, { requestQueue }) =
                     productId.toString(),
                     product.language
                 ];
-                let fields = 'status = ?, finished_at = ?, product_info_payload = ?, updated_at = ?';
+                let fields = 'user_token=?, product_url=?, status = ?, finished_at = ?, product_info_payload = ?, updated_at = ?';
                 let condition = 'product_code = ? AND language=? AND product_info_payload IS NULL';
                 db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, (err, data) => {
                     resolve();
                 });
             });
-            await Apify.pushData({ ...product });
+            // await Apify.pushData({ ...product });
             console.log(`CRAWLER -- Fetching product: ${productId} completed and successfully pushed to dataset`);
         }
     }
@@ -114,7 +117,7 @@ exports.DESCRIPTION = async ({ $, request }) => {
     delete product.descriptionURL;
 
     // Push data
-    await Apify.pushData({ ...product });
+    // await Apify.pushData({ ...product });
 
     log.debug(`CRAWLER -- Fetching product description: ${product.id} completed and successfully pushed to dataset`);
 };

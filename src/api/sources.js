@@ -45,9 +45,14 @@ router.post("/products", async (req, res, next) => {
                     req.body.items.map((item1) => {
                         req.body.languages.map((item2) => {
                             var product = {};
-                            product.code = item1;
-                            product.language = item2;
-                            products.push(product);
+
+                            if (validLanguageList.includes(item2)) {
+                                product.code = item1;
+                                product.language = item2;
+                                products.push(product);
+                            } else {
+                                invalidLanguageList.push(item2);
+                            }                            
                         })
                     });            
                 } else {
@@ -55,20 +60,21 @@ router.post("/products", async (req, res, next) => {
                 }
             
                 products.map(async (product, key) => {
+                    
                     const data = { product };
                     const options = {
+                        payloadLen: products.length,
                         delay: 20,
                         attempts: 3
                     }
-
-                    if (validLanguageList.includes(product.language)) {
-                        await workQueue.add(data, options);
-                    } else {
-                        invalidLanguageList.push(product.language);
-                    }                    
+                    
+                    await workQueue.add(data, options);
                 });
+
+
                 const tempList = invalidLanguageList;
                 invalidLanguageList = [];
+
                 
                 if (tempList.length === 0) {
                     return res.json({ message: "ok" });                
