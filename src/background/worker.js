@@ -8,9 +8,11 @@ const uuidv4 = require('uuid/v4');
 
 var startUrlList = [];
 
-const aliExpressWorker = (product, payloadLen) => {
-    db.query(Source.getSourceByFieldNameSQL('store_language'), [product.language], (err, data) => {
-        if (!err) {
+const aliExpressWorker = (product, payloadLen, callback) => {
+    db.query(Source.getSouceByFieldNameSQL('store_language'), [product.language], (err, data) => {
+        if (err) {
+            callback(err, null);
+        } else {
             if (data && data.length > 0) {
                 let domain = data[0].store_url;
                 let params = {
@@ -20,47 +22,62 @@ const aliExpressWorker = (product, payloadLen) => {
                     updated_at: moment(Date.now()).format("YYYY-MM-DD hh:mm:ss")
                 };
                 let aliRequest = new AliRequest();
-                db.query(aliRequest.getAddAliRequestSQL(), params, (err, data) => {
-                    let params = {
-                        uuid: uuidv4(),
-                        product_code: product.code.toString(),
-                        language: product.language,
-                        product_info_payload: null,
-                        status: "READY",
-                        imported: 0,
-                        created_at: moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
-                        updated_at: moment(Date.now()).format("YYYY-MM-DD hh:mm:ss")
-                    };
-                    let aliQueue = new AliQueue();
-                    db.query(aliQueue.getAddAliQueueSQL(), params, (err, data) => {
-                        if (!err) {
-                            let startUrl = domain + 'item/' + product.code + '.html';
-                            let params = [
-                                'RESERVED',
-                                moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
-                                moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
-                                product.code.toString(),
-                                product.language
-                            ];
-                            let fields = 'status = ?, reserved_at = ?, updated_at = ?';
-                            let condition = 'product_code = ? AND language = ? AND product_info_payload IS NULL';
-                            db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, async (err, data) => {
-                                if (!err) {
-                                    startUrlList.push({'startUrl': startUrl, 'language': product.language});
 
-                                    if (startUrlList.length === payloadLen) {
-                                        await callApifyMain(startUrlList);
-                                    }                                    
-                                }
-                            });
-                        }
-                    });
+                db.query(aliRequest.getAddAliRequestSQL(), params, (err, data) => {
+                    if (err) {
+                        callback(err, null);
+                    } else {
+                        let params = {
+                            uuid: uuidv4(),
+                            user_token: 'arjtT1zdp7dc54eC39HqLyjWD',
+                            product_code: product.code.toString(),
+                            language: product.language,
+                            product_info_payload: null,
+                            status: "READY",
+                            imported: 0,
+                            created_at: moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
+                            updated_at: moment(Date.now()).format("YYYY-MM-DD hh:mm:ss")
+                        };
+                        let aliQueue = new AliQueue();
+
+                        db.query(aliQueue.getAddAliQueueSQL(), params, (err, data) => {
+                            if (err) {
+                                callback(err, null);
+                            } else {
+                                let startUrl = domain + 'item/' + product.code + '.html';
+                                let params = [
+                                    'RESERVED',
+                                    moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
+                                    moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
+                                    product.code.toString(),
+                                    product.language
+                                ];
+                                let fields = 'status = ?, reserved_at = ?, updated_at = ?';
+                                let condition = 'product_code = ? AND language = ? AND product_info_payload IS NULL';
+
+                                db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, async (err, data) => {
+                                    if (err) {
+                                        callback(err, null);
+                                    } else {
+                                        startUrlList.push({
+                                            'startUrl': startUrl,
+                                            'language': product.language
+                                        });
+    
+                                        if (startUrlList.length === payloadLen) {
+                                            await callApifyMain(startUrlList);
+                                        }                                        
+                                    }
+                                });                                
+                            }
+                        });                        
+                    }
                 });
-            }
+            }            
         }
-    })
-}
+    });
+};
 
 module.exports = {
     aliExpressWorker
-}
+};

@@ -7,7 +7,9 @@ const getProductDetail = (dataScript, url) => {
         return false;
     }
 
-    const { data } = safeEval(dataScript);
+    const {
+        data
+    } = safeEval(dataScript);
 
     const {
         actionModule,
@@ -62,7 +64,9 @@ const getProductDetail = (dataScript, url) => {
             price: skuPriceItem.skuVal.skuAmount.formatedAmount,
             attributes: skuPriceItem.skuPropIds.split(',')
                 .map(propId => (skuModule.productSKUPropertyList ? skuModule.productSKUPropertyList
-                    .reduce((arr, obj) => { return arr.concat(obj.skuPropertyValues); }, [])
+                    .reduce((arr, obj) => {
+                        return arr.concat(obj.skuPropertyValues);
+                    }, [])
                     .find(propVal => propVal.propertyValueId === parseInt(propId, 10)).propertyValueName : null)),
         })),
         companyId: recommendModule.companyId,
@@ -70,12 +74,10 @@ const getProductDetail = (dataScript, url) => {
     };
 };
 
-
 // Get description HTML of product
 const getProductDescription = async ($) => {
     return $.html();
 };
-
 
 module.exports = {
     getProductDetail,

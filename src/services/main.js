@@ -4,54 +4,61 @@ const tools = require('./tools');
 require('dotenv').config();
 
 const {
-    utils: { log },
+    utils: {
+        log
+    },
 } = Apify;
 
 // Create crawler
 const callApifyMain = (urls) => {
-    
+
     Apify.main(async () => {
 
-        const sourceUrls = urls.map((url) => (
-            {"url": url.startUrl, "language": url.language}
-        ));
-        
+        const sourceUrls = urls.map((url) => ({
+            "url": url.startUrl,
+            "language": url.language
+        }));
+
         log.info('PHASE -- STARTING ACTOR.');
-        
+
         var userInput = await Apify.getInput();
         userInput = Object.assign({}, userInput, {
             "startUrls": sourceUrls
-        })
-        
+        });
+
         log.info('ACTOR OPTIONS: -- ', userInput);
-        
+
         // Create request queue
         const requestQueue = await Apify.openRequestQueue();
-        
+
         // Fetch start urls
-        const { startUrls } = userInput;
-        
+        const {
+            startUrls
+        } = userInput;
+
         if (startUrls.length === 0) {
             throw new Error('Start URLs must be defined');
         } else {
             const mappedStartUrls = tools.mapStartUrls(startUrls);
-            
+
             // Initialize first requests
             for (const mappedStartUrl of mappedStartUrls) {
                 await requestQueue.addRequest({
                     ...mappedStartUrl,
-                    headers: { 
+                    headers: {
                         Connection: 'keep-alive',
                         'User-Agent': Apify.utils.getRandomUserAgent()
                     }
                 });
             }
         }
-        
+
         const agent = await tools.getProxyAgent(userInput);
 
         // Create route
-        const router = tools.createRouter({ requestQueue });
+        const router = tools.createRouter({
+            requestQueue
+        });
 
         log.info('PHASE -- SETTING UP CRAWLER.', requestQueue);
 
@@ -65,19 +72,29 @@ const callApifyMain = (urls) => {
             maxRequestsPerCrawl: 500,
             ignoreSslErrors: true,
             // Proxy options
-            ...(userInput.proxy.useApifyProxy ? { useApifyProxy: userInput.proxy.useApifyProxy } : {}),
-            ...(userInput.proxy.apifyProxyGroups ? { apifyProxyGroups: userInput.proxy.apifyProxyGroups } : {}),
-            ...(userInput.proxy.proxyUrls ? { proxyUrls: userInput.proxy.proxyUrls } : {}),
+            ...(userInput.proxy.useApifyProxy ? {
+                useApifyProxy: userInput.proxy.useApifyProxy
+            } : {}),
+            ...(userInput.proxy.apifyProxyGroups ? {
+                apifyProxyGroups: userInput.proxy.apifyProxyGroups
+            } : {}),
+            ...(userInput.proxy.proxyUrls ? {
+                proxyUrls: userInput.proxy.proxyUrls
+            } : {}),
             handlePageFunction: async (context) => {
-                console.log('----------------------------------------------------------------------------')
-                const { request, response, $ } = context;
+                console.log('----------------------------------------------------------------------------');
+                const {
+                    request,
+                    response,
+                    $
+                } = context;
 
                 log.debug(`CRAWLER -- Processing ${request.url}`);
 
                 // Status code check
-                if (!response || response.statusCode !== 200
-                    || request.url.includes('login.')
-                    || $('body').data('spm') === 'buyerloginandregister') {
+                if (!response || response.statusCode !== 200 ||
+                    request.url.includes('login.') ||
+                    $('body').data('spm') === 'buyerloginandregister') {
                     throw new Error(`We got blocked by target on ${request.url}`);
                 }
 
@@ -103,15 +120,16 @@ const callApifyMain = (urls) => {
                 await router(request.userData.label, context);
             },
             handleFailedRequestFunction: async (context) => {
-                const { request, error } = context;
+                const {
+                    request,
+                    error
+                } = context;
 
                 // Add user input to context
                 context.userInput = userInput;
                 context.agent = agent;
 
                 context.dataScript = null;
-
-                // log.info('PHASE -- CRAWLER GOT ERROR:', error.message);
 
                 await router(request.userData.label, context);
             }
@@ -124,29 +142,42 @@ const callApifyMain = (urls) => {
             gotoTimeoutSecs: 20,
             maxRequestsPerCrawl: 500,
             maxConcurrency: userInput.maxConcurrency,
-            launchPuppeteerOptions: {                
+            launchPuppeteerOptions: {
                 useChrome: true,
-                ...(userInput.proxy.useApifyProxy ? { useApifyProxy: userInput.proxy.useApifyProxy } : {}),
-                ...(userInput.proxy.apifyProxyGroups ? { apifyProxyGroups: userInput.proxy.apifyProxyGroups } : {}),
+                ...(userInput.proxy.useApifyProxy ? {
+                    useApifyProxy: userInput.proxy.useApifyProxy
+                } : {}),
+                ...(userInput.proxy.apifyProxyGroups ? {
+                    apifyProxyGroups: userInput.proxy.apifyProxyGroups
+                } : {}),
                 stealth: true,
             },
             puppeteerPoolOptions: {
-                ...(userInput.proxy.proxyUrls ? { proxyUrls: userInput.proxy.proxyUrls } : {}),
+                ...(userInput.proxy.proxyUrls ? {
+                    proxyUrls: userInput.proxy.proxyUrls
+                } : {}),
                 maxOpenPagesPerInstance: 5
             },
             handlePageFunction: async (context) => {
-                const { request, response, page, puppeteerPool, autoscaledPool, session } = context;
+                const {
+                    request,
+                    response,
+                    page,
+                    puppeteerPool,
+                    autoscaledPool,
+                    session
+                } = context;
                 let content = await page.content();
 
                 log.debug(`CRAWLER -- Processing ${request.url}`);
 
                 // Status code check
-                if (!response || response._status !== 200
-                    || request.url.includes('login.')
-                    || content.includes('data-spm="buyerloginandregister"')) {
+                if (!response || response._status !== 200 ||
+                    request.url.includes('login.') ||
+                    content.includes('data-spm="buyerloginandregister"')) {
                     throw new Error(`We got blocked by target on ${request.url}`);
                 }
-                
+
                 if (request.userData.label !== 'DESCRIPTION' && !content.includes('runParams')) {
                     throw new Error(`We got blocked by target on ${request.url}`);
                 }
@@ -170,15 +201,16 @@ const callApifyMain = (urls) => {
                 await router(request.userData.label, context);
             },
             handleFailedRequestFunction: async (context) => {
-                const { request, error } = context;
+                const {
+                    request,
+                    error
+                } = context;
 
                 // Add user input to context
                 context.userInput = userInput;
                 context.agent = agent;
 
                 context.dataScript = null;
-
-                // log.info('PHASE -- CRAWLER GOT ERROR:', error.message);
 
                 await router(request.userData.label, context);
             }
@@ -189,8 +221,8 @@ const callApifyMain = (urls) => {
         process.env.USE_CHEERIO === 'TRUE' ? await cheerioCrawler.run() : await puppeteerCrawler.run();
 
         log.info('PHASE -- ACTOR FINISHED.');
-        await requestQueue.drop(); 
+        await requestQueue.drop();
     });
-}
+};
 
-module.exports = callApifyMain
+module.exports = callApifyMain;

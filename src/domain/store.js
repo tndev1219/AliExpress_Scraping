@@ -5,7 +5,7 @@ class Store {
     }
 
     getAddStoreSQL() {
-        let sql = `INSERT INTO stores SET ?`
+        let sql = `INSERT INTO stores SET ?`;
         return sql;
     }
 
@@ -15,7 +15,7 @@ class Store {
     }
 
     static getStoreByFieldNameSQL(fieldName) {
-        let sql = `SELECT * FROM stores WHERE ${fieldName}=?`
+        let sql = `SELECT * FROM stores WHERE ${fieldName}=?`;
         return sql;
     }
 
@@ -30,9 +30,9 @@ class Store {
     }
 
     static updateStoreByFieldNameSQL(fields, condition){
-        let sql = `UPDATE stores SET ${fields} WHERE ${condition}`
-        return sql
+        let sql = `UPDATE stores SET ${fields} WHERE ${condition}`;
+        return sql;
     }
 }
 
-module.exports = Store
+module.exports = Store;

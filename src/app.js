@@ -6,7 +6,7 @@ var { setQueues, UI } = require('bull-board');
 var sources = require('./api/sources');
 
 const app = express();
-require('dotenv').config()
+require('dotenv').config();
 
 app.use(cors());
 app.use(bodyparser.json());

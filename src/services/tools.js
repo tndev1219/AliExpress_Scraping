@@ -1,10 +1,11 @@
 const Apify = require('apify');
 const HttpsProxyAgent = require('https-proxy-agent');
-const URL = require('url');
 const routes = require('./routes');
 
 const {
-    utils: { log },
+    utils: {
+        log
+    },
 } = Apify;
 
 // Create router
@@ -22,7 +23,11 @@ exports.createRouter = (globalContext) => {
 
 // Creates proxy URL with user input
 const createProxyUrl = async (userInput) => {
-    const { apifyProxyGroups, useApifyProxy, proxyUrls } = userInput.proxy;
+    const {
+        apifyProxyGroups,
+        useApifyProxy,
+        proxyUrls
+    } = userInput.proxy;
     if (proxyUrls && proxyUrls.length > 0) {
         return proxyUrls[0];
     }
@@ -43,8 +48,6 @@ exports.getProxyAgent = async (userInput) => {
 // Detects url and map them to routes
 exports.mapStartUrls = (startUrls) => {
     return startUrls.map((startUrl) => {
-        // const parsedURL = URL.parse(startUrl.url);
-        // const link = `https://www.aliexpress.com${parsedURL.pathname}`;
         const link = startUrl.url;
         let routeType = '';
         let userData = {};
@@ -62,7 +65,7 @@ exports.mapStartUrls = (startUrls) => {
         if (startUrl.url.split('https://')[1].split('.aliexpress')[0] === 'www') {
             userData.language = 'EN';
         } else {
-            userData.language = startUrl.language
+            userData.language = startUrl.language;
         }
 
         userData.label = routeType;

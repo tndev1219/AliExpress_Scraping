@@ -4,7 +4,7 @@ class AliRequest {
     }
 
     getAddAliRequestSQL() {
-        let sql = `INSERT INTO ali_requests SET ?`
+        let sql = `INSERT INTO ali_requests SET ?`;
         return sql;
     }
 
@@ -24,4 +24,4 @@ class AliRequest {
     }
 }
 
-module.exports = AliRequest
+module.exports = AliRequest;

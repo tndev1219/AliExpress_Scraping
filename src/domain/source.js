@@ -5,7 +5,7 @@ class Source {
     }
 
     getAddSourceSQL() {
-        let sql = `INSERT INTO sources SET ?`
+        let sql = `INSERT INTO sources SET ?`;
         return sql;
     }
 
@@ -30,9 +30,9 @@ class Source {
     }
 
     static getSourceByFieldNameSQL(fieldName) {
-        let sql = `SELECT * FROM sources WHERE ${fieldName}=?`
+        let sql = `SELECT * FROM sources WHERE ${fieldName}=?`;
         return sql;
     }
 }
 
-module.exports = Source
+module.exports = Source;

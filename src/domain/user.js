@@ -5,7 +5,7 @@ class User {
     }
 
     getAddUserSQL() {
-        let sql = `INSERT INTO users SET ?`
+        let sql = `INSERT INTO users SET ?`;
         return sql;
     }
 
@@ -15,13 +15,13 @@ class User {
     }
 
     static getUserByFieldNameSQL(fieldName) {
-        let sql = `SELECT * FROM users WHERE ${fieldName}=?`
+        let sql = `SELECT * FROM users WHERE ${fieldName}=?`;
         return sql;
     }
 
     static updateUserByFieldNameSQL(fields, condition){
-        let sql = `UPDATE users SET ${fields} WHERE ${condition}`
-        return sql
+        let sql = `UPDATE users SET ${fields} WHERE ${condition}`;
+        return sql;
     }
 
     static deleteUserByIdSQL() {

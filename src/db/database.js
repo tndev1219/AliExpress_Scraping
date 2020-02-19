@@ -1,5 +1,5 @@
-var mysql = require('mysql')
-require('dotenv').config()
+var mysql = require('mysql');
+require('dotenv').config();
 
 const pool = mysql.createPool({
     connectionLimit: 10,
@@ -13,7 +13,6 @@ const pool = mysql.createPool({
 const executeQuery = (sql, params, callback) => {
     pool.getConnection((err, connection) => {
         if (err) {
-            console.log(err)
             return callback(err, null);
         } else {
             if (connection) {
@@ -27,7 +26,7 @@ const executeQuery = (sql, params, callback) => {
             }
         }
     });
-}
+};
 
 const query = (sql, params, callback) => {
     executeQuery(sql, params, function (err, data) {
@@ -36,8 +35,8 @@ const query = (sql, params, callback) => {
         }
         callback(null, data);
     });
-}
+};
 
 module.exports = {
     query
-}
+};
