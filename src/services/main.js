@@ -58,6 +58,7 @@ const callApifyMain = (urls) => {
         const cheerioCrawler = new Apify.CheerioCrawler({
             requestQueue,
             handlePageTimeoutSecs: 9999,
+            // Maximum number of requests
             maxRequestRetries: 5,
             requestTimeoutSecs: 20,
             maxConcurrency: userInput.maxConcurrency,
