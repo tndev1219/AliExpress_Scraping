@@ -122,7 +122,6 @@ exports.PRODUCT = async ({
                     });
     
                     let params = [
-                        product.link,
                         'FINISHED',
                         moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
                         JSON.stringify(product),
@@ -130,7 +129,7 @@ exports.PRODUCT = async ({
                         productId.toString(),
                         product.language
                     ];
-                    let fields = 'product_url=?, status = ?, finished_at = ?, product_info_payload = ?, updated_at = ?';
+                    let fields = 'status = ?, finished_at = ?, product_info_payload = ?, updated_at = ?';
                     let condition = 'product_code = ? AND language=? AND product_info_payload IS NULL';
                     db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, (err, data) => {
                         if (err) {

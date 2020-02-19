@@ -18,7 +18,8 @@ function start() {
 
 	workQueue.process(maxJobsPerWorker, async (data) => {
 		let job = data;
-		await worker.aliExpressWorker(job.data.product, job.opts.payloadLen, (err, data) => {
+		
+		await worker.aliExpressWorker(job.data.product, job.opts.payloadLen, job.opts.token, (err, data) => {
 			if (err) {
 				db.query(AliQueue.getAliQueueSQL(), [job.data.product.code, job.data.product.language], (err, data) => {
 					if (!err) {
@@ -37,11 +38,11 @@ function start() {
 						} else {
 							let params = {
 								uuid: uuidv4(),
-								user_token: 'arjtT1zdp7dc54eC39HqLyjWD',
+								user_token: job.opts.token,
 								product_code: job.data.product.code.toString(),
 								language: job.data.product.language,
 								product_info_payload: null,
-								status: "READY",
+								status: "FAILED",
 								imported: 0,
 								created_at: moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
 								updated_at: moment(Date.now()).format("YYYY-MM-DD hh:mm:ss")

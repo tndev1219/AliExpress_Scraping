@@ -40,6 +40,8 @@ router.post("/products", async (req, res, next) => {
                     message: err
                 });
             } else {
+                let token = data[0].api_token;
+
                 db.query(Source.getLanguageSourceSQL(), (err, data) => {
                     if (err) {
                         return res.json({
@@ -78,6 +80,7 @@ router.post("/products", async (req, res, next) => {
                                 product
                             };
                             const options = {
+                                token: token,
                                 payloadLen: products.length,
                                 delay: 20,
                                 attempts: 3

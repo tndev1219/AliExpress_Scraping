@@ -8,8 +8,8 @@ const uuidv4 = require('uuid/v4');
 
 var startUrlList = [];
 
-const aliExpressWorker = (product, payloadLen, callback) => {
-    db.query(Source.getSouceByFieldNameSQL('store_language'), [product.language], (err, data) => {
+const aliExpressWorker = (product, payloadLen, token, callback) => {
+    db.query(Source.getSourceByFieldNameSQL('store_language'), [product.language], (err, data) => {
         if (err) {
             callback(err, null);
         } else {
@@ -29,7 +29,7 @@ const aliExpressWorker = (product, payloadLen, callback) => {
                     } else {
                         let params = {
                             uuid: uuidv4(),
-                            user_token: 'arjtT1zdp7dc54eC39HqLyjWD',
+                            user_token: token,
                             product_code: product.code.toString(),
                             language: product.language,
                             product_info_payload: null,
@@ -46,13 +46,14 @@ const aliExpressWorker = (product, payloadLen, callback) => {
                             } else {
                                 let startUrl = domain + 'item/' + product.code + '.html';
                                 let params = [
+                                    startUrl,
                                     'RESERVED',
                                     moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
                                     moment(Date.now()).format("YYYY-MM-DD hh:mm:ss"),
                                     product.code.toString(),
                                     product.language
                                 ];
-                                let fields = 'status = ?, reserved_at = ?, updated_at = ?';
+                                let fields = 'product_url=?, status = ?, reserved_at = ?, updated_at = ?';
                                 let condition = 'product_code = ? AND language = ? AND product_info_payload IS NULL';
 
                                 db.query(AliQueue.updateAliQueueByFieldNameSQL(fields, condition), params, async (err, data) => {
