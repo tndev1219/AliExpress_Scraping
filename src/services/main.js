@@ -1,5 +1,6 @@
 const Apify = require('apify');
 const Promise = require('bluebird');
+const puppeteer = require('puppeteer');
 const tools = require('./tools');
 require('dotenv').config();
 
@@ -36,19 +37,17 @@ const callApifyMain = (urls) => {
             startUrls
         } = userInput;
 
+        var mappedStartUrls = [];
+
         if (startUrls.length === 0) {
             throw new Error('Start URLs must be defined');
         } else {
-            const mappedStartUrls = tools.mapStartUrls(startUrls);
+            mappedStartUrls = tools.mapStartUrls(startUrls);
 
             // Initialize first requests
             for (const mappedStartUrl of mappedStartUrls) {
                 await requestQueue.addRequest({
-                    ...mappedStartUrl,
-                    headers: {
-                        Connection: 'keep-alive',
-                        'User-Agent': Apify.utils.getRandomUserAgent()
-                    }
+                    ...mappedStartUrl
                 });
             }
         }
@@ -81,6 +80,13 @@ const callApifyMain = (urls) => {
             ...(userInput.proxy.proxyUrls ? {
                 proxyUrls: userInput.proxy.proxyUrls
             } : {}),
+            prepareRequestFunction: ({ request }) => {
+                request.headers = {
+                    Connection: 'keep-alive',
+                    'User-Agent': Apify.utils.getRandomUserAgent(),
+                };
+                return request;
+            },
             handlePageFunction: async (context) => {
                 console.log('----------------------------------------------------------------------------');
                 const {
@@ -135,90 +141,86 @@ const callApifyMain = (urls) => {
             }
         });
 
-        const puppeteerCrawler = new Apify.PuppeteerCrawler({
-            requestQueue,
-            handlePageTimeoutSecs: 99999,
-            maxRequestRetries: 5,
-            gotoTimeoutSecs: 20,
-            maxRequestsPerCrawl: 500,
-            maxConcurrency: userInput.maxConcurrency,
-            launchPuppeteerOptions: {
-                useChrome: true,
-                ...(userInput.proxy.useApifyProxy ? {
-                    useApifyProxy: userInput.proxy.useApifyProxy
-                } : {}),
-                ...(userInput.proxy.apifyProxyGroups ? {
-                    apifyProxyGroups: userInput.proxy.apifyProxyGroups
-                } : {}),
-                stealth: true,
-            },
-            puppeteerPoolOptions: {
-                ...(userInput.proxy.proxyUrls ? {
-                    proxyUrls: userInput.proxy.proxyUrls
-                } : {}),
-                maxOpenPagesPerInstance: 5
-            },
-            handlePageFunction: async (context) => {
-                const {
-                    request,
-                    response,
-                    page,
-                    puppeteerPool,
-                    autoscaledPool,
-                    session
-                } = context;
-                let content = await page.content();
+        const puppeteerCrawler = async (mappedStartUrls) => {
+            const browser = await puppeteer.launch({
+                headless: false,
+                slowMo: 100,
+                args: [ `--proxy-server=${userInput.proxy.proxyUrls[0]}` ]
+            });
 
-                log.debug(`CRAWLER -- Processing ${request.url}`);
+            const page = await browser.newPage();
 
-                // Status code check
-                if (!response || response._status !== 200 ||
-                    request.url.includes('login.') ||
-                    content.includes('data-spm="buyerloginandregister"')) {
-                    throw new Error(`We got blocked by target on ${request.url}`);
+            for (let mappedStartUrl of mappedStartUrls) {
+                let response = '';
+
+                try {
+                    response = await page.goto(mappedStartUrl.url, {
+                        waitUntil: 'networkidle2',
+                        timeout: 300 * 1000
+                    });
+                } catch (err) {
+                    let context = {};
+                    let request = {};
+
+                    context.request = request;
+                    context.request.userData = mappedStartUrl.userData;
+                    context.request.url = mappedStartUrl.url;
+                    context.dataScript = null;
+                    await router(mappedStartUrl.userData.label, context);
+                } finally {
+                    let context = {};
+                    let request = {};
+                    let content = await page.content();
+                    let requestUrl = await page.url();
+
+                    context.request = request;
+                    context.request.userData = mappedStartUrl.userData;
+                    context.request.url = mappedStartUrl.url;
+                    
+                    // Add user input to context
+                    context.userInput = userInput;
+                    context.agent = agent;
+
+                    log.debug(`CRAWLER -- Processing ${requestUrl}`);
+
+                    if (!response || response.status() !== 200 || requestUrl.includes('login.') || !content.includes('data-spm="detail"')) {
+                        console.log(`Error: We got blocked by target on ${requestUrl}`);
+                        context.dataScript = null;
+                        await router(mappedStartUrl.userData.label, context);
+                        continue;
+                    }
+
+                    if (mappedStartUrl.userData.label !== 'DESCRIPTION' && !content.includes('runParams')) {
+                        console.log(`Error: We got blocked by target on ${requestUrl}`);
+                        context.dataScript = null;
+                        await router(mappedStartUrl.userData.label, context);
+                        continue;
+                    }
+
+                    if (content.includes('/_____tmd_____/punish')) {
+                        console.log(`Error: We got blocked by target on ${requestUrl}`);
+                        context.dataScript = null;
+                        await router(mappedStartUrl.userData.label, context);
+                        continue;
+                    }
+                    
+                    // prepare dataScript to get product info
+                    context.dataScript = content.split('window.runParams = ')[1].split('var GaData')[0].replace(/;/g, '');
+                    
+                    // Random delay
+                    await Promise.delay(Math.random() * 10000);
+                    
+                    // Redirect to route
+                    await router(mappedStartUrl.userData.label, context);
                 }
-
-                if (request.userData.label !== 'DESCRIPTION' && !content.includes('runParams')) {
-                    throw new Error(`We got blocked by target on ${request.url}`);
-                }
-
-                if (content.includes('/_____tmd_____/punish')) {
-                    throw new Error(`We got blocked by target on ${request.url}`);
-                }
-
-                // prepare dataScript to get product info
-                const dataScript = content.split('window.runParams = ')[1].split('var GaData')[0].replace(/;/g, '');
-                context.dataScript = dataScript;
-
-                // Random delay
-                await Promise.delay(Math.random() * 10000);
-
-                // Add user input to context
-                context.userInput = userInput;
-                context.agent = agent;
-
-                // Redirect to route
-                await router(request.userData.label, context);
-            },
-            handleFailedRequestFunction: async (context) => {
-                const {
-                    request,
-                    error
-                } = context;
-
-                // Add user input to context
-                context.userInput = userInput;
-                context.agent = agent;
-
-                context.dataScript = null;
-
-                await router(request.userData.label, context);
             }
-        });
+
+            await browser.close();
+        };
 
         log.info('PHASE -- STARTING CRAWLER.');
 
-        process.env.USE_CHEERIO === 'TRUE' ? await cheerioCrawler.run() : await puppeteerCrawler.run();
+        process.env.USE_CHEERIO === 'TRUE' ? await cheerioCrawler.run() : await puppeteerCrawler(mappedStartUrls);
 
         log.info('PHASE -- ACTOR FINISHED.');
         await requestQueue.drop();
