@@ -145,7 +145,9 @@ const callApifyMain = (urls) => {
             const browser = await puppeteer.launch({
                 headless: false,
                 slowMo: 100,
-                args: [ `--proxy-server=${userInput.proxy.proxyUrls[0]}` ]
+                args: [`--proxy-server=${userInput.proxy.proxyUrls[0]}`,
+                    '--ignore-certificate-errors'],
+                timeout: 60
             });
 
             const page = await browser.newPage();
@@ -176,7 +178,7 @@ const callApifyMain = (urls) => {
                     context.request = request;
                     context.request.userData = mappedStartUrl.userData;
                     context.request.url = mappedStartUrl.url;
-                    
+
                     // Add user input to context
                     context.userInput = userInput;
                     context.agent = agent;
@@ -203,13 +205,13 @@ const callApifyMain = (urls) => {
                         await router(mappedStartUrl.userData.label, context);
                         continue;
                     }
-                    
+
                     // prepare dataScript to get product info
                     context.dataScript = content.split('window.runParams = ')[1].split('var GaData')[0].replace(/;/g, '');
-                    
+
                     // Random delay
                     await Promise.delay(Math.random() * 10000);
-                    
+
                     // Redirect to route
                     await router(mappedStartUrl.userData.label, context);
                 }
