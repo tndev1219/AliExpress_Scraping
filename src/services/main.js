@@ -147,7 +147,7 @@ const callApifyMain = (urls) => {
                 slowMo: 100,
                 args: [`--proxy-server=${userInput.proxy.proxyUrls[0]}`,
                     '--ignore-certificate-errors'],
-                timeout: 60
+                timeout: 60000
             });
 
             const page = await browser.newPage();
